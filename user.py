@@ -32,14 +32,16 @@ class user:
                 v+=1
             a.append(row)
         a1=graph(a,i,j)        
+        ali=[]
         # a1.print_graph() 
         nextstate=graph(a,i,j)
         arraycopy=copy.deepcopy(a1.a)
-        solution = a1.dfs(a1)
+        visited=set()
+        solution = a1.dfss(a1,visited)
         if solution:
             print("Solution found!")
             for step, board in enumerate(solution):
-                print(f"Step {step}:\n{board.print_graph()}")
+                print(f"number {step}:\n{board.print_graph()}")
         else:
             print("No solution exists.")
         # for c in range(i):

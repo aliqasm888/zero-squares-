@@ -1,3 +1,4 @@
+from pydoc import visiblename
 from squer import squer
 import copy
 # import numpy
@@ -340,3 +341,42 @@ class graph:
                 queue.append((next_state, path + [current]))
 
         return None  
+    
+    def dfss(self,current,visited,path):
+        v=0
+        if current.winner(current.a, current.i, current.j):
+            print("Goal reached")
+            return path + [current]   
+        if visited is None:
+            visited=set()
+        visited.add(current)
+        current.print_graph()
+        for next_state in self.nextstate(current):
+            for visi in visited:
+                if self.equals(visi,next_state):
+                    v+=1
+            if v==0:
+                return self.dfss(next_state,visited,path)
+
+
+def dfss(self, current, visited=None, path=None):
+    if visited is None:
+        visited = set()
+    if path is None:
+        path = []
+
+    if current.winner(current.a, current.i, current.j):
+        print("Goal reached")
+        return path + [current]
+
+    visited.add(current)
+    current.print_graph() 
+
+    for next_state in self.nextstate(current):
+        if next_state not in visited: 
+            result = self.dfss(next_state, set(visited), path + [current]) 
+            if result: 
+                return result
+    return None 
+
+
