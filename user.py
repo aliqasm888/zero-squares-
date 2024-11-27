@@ -37,7 +37,8 @@ class user:
         nextstate=graph(a,i,j)
         arraycopy=copy.deepcopy(a1.a)
         visited=set()
-        solution = a1.dfss(a1,visited)
+        path=[]
+        solution = a1.dfss(a1,visited,path)
         if solution:
             print("Solution found!")
             for step, board in enumerate(solution):

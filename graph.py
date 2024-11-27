@@ -1,6 +1,9 @@
 from pydoc import visiblename
+import stat
 from squer import squer
 import copy
+import heapq 
+
 # import numpy
 # import matplotlib
 # import tensorflow
@@ -287,7 +290,29 @@ class graph:
             down=self.move_to_down(obj)
             list.append(down)
         return list
+
+    def nextstate_with_cost(self, obj):
+        states = []
+    # Generate possible moves and add them to the list
+        if obj.chick_if_right():
+            right = self.move_to_right(obj)
+        states.append((right, self.cost_of_graph_right(right)))
+        if obj.chick_if_left():
+            left = self.move_to_left(obj)
+            states.append((left, self.cost_of_graph_left(left)))
+        if obj.chick_if_up():
+            up = self.move_to_up(obj)
+            states.append((up, self.cost_of_graph_up(up)))
+        if obj.chick_if_down():
+            down = self.move_to_down(obj)
+            states.append((down, self.cost_of_graph_dwon(down)))
     
+    # Sort the list based on cost
+        states.sort(key=lambda x: x[1])
+    
+    # Return only the objects (not the costs)
+        return states
+
     def dfs(self,start_board):
         o=0
         v=0
@@ -342,41 +367,189 @@ class graph:
 
         return None  
     
-    def dfss(self,current,visited,path):
+
+    def recursive_dfs(self, current, visited=None, path=None):
         v=0
+        if visited is None:
+            visited = set()
+        if path is None:
+            path = []
+
         if current.winner(current.a, current.i, current.j):
             print("Goal reached")
-            return path + [current]   
-        if visited is None:
-            visited=set()
+            return path + [current]
+
         visited.add(current)
-        current.print_graph()
+        current.print_graph() 
+
         for next_state in self.nextstate(current):
-            for visi in visited:
-                if self.equals(visi,next_state):
+            for t in visited:
+                if self.equals(next_state,t):
                     v+=1
-            if v==0:
-                return self.dfss(next_state,visited,path)
+            if v==0 :
+                result = self.dfss(next_state, set(visited), path + [current]) 
+                if result: 
+                    return result
+        return None 
 
 
-def dfss(self, current, visited=None, path=None):
-    if visited is None:
-        visited = set()
-    if path is None:
-        path = []
-
-    if current.winner(current.a, current.i, current.j):
-        print("Goal reached")
-        return path + [current]
-
-    visited.add(current)
-    current.print_graph() 
-
-    for next_state in self.nextstate(current):
-        if next_state not in visited: 
-            result = self.dfss(next_state, set(visited), path + [current]) 
-            if result: 
-                return result
-    return None 
 
 
+    def cost_of_graph_dwon(graph):
+        cost=0
+        change=copy.deepcopy(graph)
+        arraycopy=copy.deepcopy(change.a)
+        if(change.chick_if_down()):
+            for c in range(change.i-2,-1,-1):
+                for d in range(change.j):
+                    if (change.a[c][d].color!="black" and change.a[c][d].color!="whait" and change.chick_if_goal(change.a[c][d].color)==False and change.chick_dwon(arraycopy,c,d)==True ):
+                        for h in range(c,change.i-1):
+                            if(change.chick_if_two__(change.a[h][d].color)):
+                                if(change.chick_dwon(change.a,h,d)):
+                                    if( change.chick_if_goal(change.a[h+1][d].color)==False):
+                                        change.a[h+1][d].color=change.separted(change.a[h][d].color)
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)
+                                        cost+=1
+                                    elif (change.chick_if_goal_correct(change.separted(change.a[h][d].color),change.a[h+1][d].color)):
+                                        change.a[h+1][d].color="whait"
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)  
+                                        cost+=1                                              
+                                    else:
+                                        change.a[h+1][d].color=change.a[h+1][d].color+"_"+change.separted(change.a[h][d].color)
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)
+                                        cost+=1
+                            if(change.chick_dwon(change.a,h,d) and not change.chick_if_two__(change.a[h][d].color) and change.a[h][d].color!="black" and change.a[h][d].color!="whait"):
+                                if( change.chick_if_goal(change.a[h+1][d].color)==False):    
+                                    change.a[h+1][d].color=change.a[h][d].color
+                                    change.a[h][d].color="whait"
+                                    cost+=1
+                                elif (change.chick_if_goal_correct(change.a[h][d].color,change.a[h+1][d].color)):
+                                    change.a[h][d].color="whait"
+                                    change.a[h+1][d].color="whait"
+                                    cost+=1
+                                else:
+                                    change.a[h+1][d].color=change.a[h+1][d].color+"_"+change.a[h][d].color
+                                    change.a[h][d].color="whait"
+                                    cost+=1
+        return cost
+    
+
+    def cost_of_graph_right(self,obj):
+        cost=0
+        change=copy.deepcopy(obj)
+        arraycopy=copy.deepcopy(obj.a)
+        if(change.chick_if_right()):
+            for c in range(change.i):
+                for d in range(change.j-2,-1,-1):
+                    if (change.a[c][d].color!="black" and change.a[c][d].color!="whait" and change.chick_if_goal(change.a[c][d].color)==False and change.chick_right(arraycopy,c,d)==True ):
+                        for h in range(d,change.j-1):
+                            if(change.chick_if_two__(change.a[c][h].color)):
+                                if(change.chick_right(change.a,c,h)):
+                                    if( change.chick_if_goal(change.a[c][h+1].color)==False):
+                                        change.a[c][h+1].color=change.separted(change.a[c][h].color)
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)
+                                        cost+=1
+                                    elif (change.chick_if_goal_correct(change.separted(change.a[c][h].color),change.a[c][h+1].color)):
+                                        change.a[c][h+1].color="whait"
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)
+                                        cost+=1
+                                    else:
+                                        change.a[c][h+1].color=change.a[c][h+1].color+"_"+change.separted(change.a[c][h].color)
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)
+                                        cost+=1
+                            if(change.chick_right(change.a,c,h) and not change.chick_if_two__(change.a[c][h].color)and change.a[c][h].color!="black" and change.a[c][h].color!="whait"):
+                                if( change.chick_if_goal(change.a[c][h+1].color)==False):    
+                                    change.a[c][h+1].color=change.a[c][h].color
+                                    change.a[c][h].color="whait"
+                                    cost+=1
+                                elif (change.chick_if_goal_correct(change.a[c][h].color,change.a[c][h+1].color)):
+                                    change.a[c][h].color="whait"
+                                    change.a[c][h+1].color="whait"
+                                    cost+=1
+                                else:
+                                    change.a[c][h+1].color=change.a[c][h+1].color+"_"+change.a[c][h].color
+                                    change.a[c][h].color="whait"   
+                                    cost+=1                         
+        return cost
+         
+    def cost_of_graph_up(self,obj):
+        cost=0
+        change=copy.deepcopy(obj)
+        arraycopy=copy.deepcopy(change.a)
+        if(change.chick_if_up()):
+            for c in range(1,change.i):
+                for d in range(change.j):
+                    if (change.a[c][d].color!="black" and change.a[c][d].color!="whait" and change.chick_if_goal(change.a[c][d].color)==False and change.chick_up(arraycopy,c,d)==True ):
+                        for h in range(c,0,-1):
+                            if(change.chick_if_two__(change.a[h][d].color)):
+                                if(change.chick_up(change.a,h,d)):
+                                    if( change.chick_if_goal(change.a[h-1][d].color)==False):
+                                        change.a[h-1][d].color=change.separted(change.a[h][d].color)
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)
+                                        cost+=1
+                                    elif (change.chick_if_goal_correct(change.separted(change.a[h][d].color),change.a[h-1][d].color)):
+                                        change.a[h-1][d].color="whait"
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)  
+                                        cost+=1                                              
+                                    else:
+                                        change.a[h-1][d].color=change.a[h-1][d].color+"_"+change.separted(change.a[h][d].color)
+                                        change.a[h][d].color=change.separted_two(change.a[h][d].color)
+                                        cost+=1
+                            if(change.chick_up(change.a,h,d) and not change.chick_if_two__(change.a[h][d].color)and change.a[h][d].color!="black" and change.a[h][d].color!="whait"):
+                                if( change.chick_if_goal(change.a[h-1][d].color)==False):    
+                                    change.a[h-1][d].color=change.a[h][d].color
+                                    change.a[h][d].color="whait"
+                                    cost+=1
+                                elif (change.chick_if_goal_correct(change.a[h][d].color,change.a[h-1][d].color)):
+                                    change.a[h][d].color="whait"
+                                    change.a[h-1][d].color="whait"
+                                    cost+=1
+                                else:
+                                    change.a[h-1][d].color=change.a[h-1][d].color+"_"+change.a[h][d].color
+                                    change.a[h][d].color="whait"
+                                    cost+=1
+        return cost
+                        
+
+    def cost_of_graph_left(self,obj):
+        cost=0
+        change=copy.deepcopy(obj)
+        arraycopy=copy.deepcopy(change.a)
+        if(change.chick_if_left()):
+            for c in range(change.i):
+                for d in range(1,change.j):
+                    if (change.a[c][d].color!="black" and change.a[c][d].color!="whait" and change.chick_if_goal(change.a[c][d].color)==False and change.chick_left(arraycopy,c,d)==True ):
+                        for h in range(d,0,-1):
+                            if(change.chick_if_two__(change.a[c][h].color) ):
+                                if(change.chick_left(change.a,c,h)):
+                                    if( change.chick_if_goal(change.a[c][h-1].color)==False):
+                                        change.a[c][h-1].color=change.separted(change.a[c][h].color)
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)
+                                        cost+=1
+                                    elif (change.chick_if_goal_correct(change.separted(change.a[c][h].color),change.a[c][h-1].color)):
+                                        change.a[c][h-1].color="whait"
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)   
+                                        cost+=1                                             
+                                    else:
+                                        change.a[c][h-1].color=change.a[c][h-1].color+"_"+change.separted(change.a[c][h].color)
+                                        change.a[c][h].color=change.separted_two(change.a[c][h].color)
+                                        cost+=1
+                            if(change.chick_left(change.a,c,h) and not change.chick_if_two__(change.a[c][h].color)and change.a[c][h].color!="black"and change.a[c][h].color!="whait" ):
+                                if( change.chick_if_goal(change.a[c][h-1].color)==False):    
+                                    change.a[c][h-1].color=change.a[c][h].color
+                                    change.a[c][h].color="whait"
+                                    cost+=1
+                                elif (change.chick_if_goal_correct(change.a[c][h].color,change.a[c][h-1].color)):
+                                    change.a[c][h].color="whait"
+                                    change.a[c][h-1].color="whait"
+                                    cost+=1
+                                else:
+                                    change.a[c][h-1].color=change.a[c][h-1].color+"_"+change.a[c][h].color
+                                    change.a[c][h].color="whait"
+                                    cost+=1      
+        return cost
+
+
+
+
+ 
