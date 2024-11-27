@@ -552,4 +552,38 @@ class graph:
 
 
 
- 
+    def ucs(self, start_board):
+        o = 0  
+        priority_queue = [(0, start_board, [])]  
+        best_goal = None  
+        best_cost = float('inf') 
+        visited = {}  
+
+        while priority_queue:
+            cost, current, path = priority_queue.pop(0)
+            if current.winner(current.a, current.i, current.j):
+                if cost < best_cost:
+                    best_goal = path + [current]
+                    best_cost = cost
+                continue
+            if current in visited and visited[current] <= cost:
+                continue
+
+            visited[current] = cost
+            children = self.nextstate_with_cost(current)  
+            if children:
+                min_cost_child = min(children, key=lambda x: x[1])
+                next_state, step_cost = min_cost_child
+                total_cost = cost + step_cost
+                if next_state not in visited or visited[next_state] > total_cost:
+                    priority_queue.append((total_cost, next_state, path + [current]))
+            o += 1
+            current.print_graph()
+            print(f"Visited nodes: {o}, Current cost: {cost}")
+
+        if best_goal:
+            print("Best goal found with cost:", best_cost)
+            return best_goal
+
+        print("No solution found.")
+        return None
